@@ -64,7 +64,7 @@ public class MyTask extends TimerTask {
                     if (this.content != null) {
                         //遇到有ORA-错误的行则发送邮件
                         if (this.content.substring(0, 4).equals("ORA-")) {
-                            this.oramail = new Mail("ERROR! the oracle has ORA", result.getString("content"));
+                            this.oramail = new Mail("ERROR! the "+ GetConfig.rb.getString("server")+" oracle has ORA", result.getString("content"));
                             this.oramail.SendMail();
                         }
                         //System.out.println("rownum:" + result.getInt("rid") + " content:" + result.getString("content"));
@@ -89,7 +89,7 @@ public class MyTask extends TimerTask {
                     if (this.content != null) {
                         //遇到有ORA-错误的行则发送邮件
                         if (this.content.substring(0, 4).equals("ORA-")) {
-                            this.oramail = new Mail("ERROR! the oracle has ORA", result.getString("content"));
+                            this.oramail = new Mail("ERROR! the "+ GetConfig.rb.getString("server")+" oracle has ORA", result.getString("content"));
                             this.oramail.SendMail();
                         }
                         //有间隔了这一行需要打印出来，否则可以为了获取lastpostion而牺牲掉这一行，进入下面的while判断是否打印
@@ -108,7 +108,7 @@ public class MyTask extends TimerTask {
                         if (this.content != null) {
                             //遇到有ORA-错误的行则发送邮件
                             if (this.content.substring(0, 4).equals("ORA-")) {
-                                this.oramail = new Mail("ERROR! the oracle has ORA", result.getString("content"));
+                                this.oramail = new Mail("ERROR! the "+ GetConfig.rb.getString("server")+" oracle has ORA", result.getString("content"));
                                 this.oramail.SendMail();
                             }
                             //System.out.println("rownum:" + result.getInt("rid") + " content:" + result.getString("content"));
