@@ -13,6 +13,7 @@ import java.util.*;
 import java.util.TimerTask;
 import java.sql.*;
 import java.io.*;
+import org.apache.log4j.*;
 
 public class MyTask extends TimerTask {
 
@@ -20,9 +21,12 @@ public class MyTask extends TimerTask {
     private int position;
     private static int lastPostion;
     private Mail oramail;
+    private String content;
+    private static Logger logger = Logger.getLogger(MyTask.class); 
 
     public MyTask(int id) {
         this.id = id;
+        PropertyConfigurator.configure(System.getProperty("user.dir") + "/config/log4j.properties");
     }
 
     //  @Override
@@ -56,12 +60,20 @@ public class MyTask extends TimerTask {
                     if (MyTask.lastPostion == 0) {
                         MyTask.lastPostion = result.getInt("lastpostion");
                     }
-                    //遇到有ORA-错误的行则发送邮件
-                    if (result.getString("content").substring(0, 4).equals("ORA-")) {
-                        this.oramail = new Mail("ERROR! the oracle has ORA", result.getString("content"));
-                        this.oramail.SendMail();
+                    this.content = result.getString("content");
+                    if (this.content != null) {
+                        //遇到有ORA-错误的行则发送邮件
+                        if (this.content.substring(0, 4).equals("ORA-")) {
+                            this.oramail = new Mail("ERROR! the oracle has ORA", result.getString("content"));
+                            this.oramail.SendMail();
+                        }
+                        //System.out.println("rownum:" + result.getInt("rid") + " content:" + result.getString("content"));
+                        logger.info("rownum:" + result.getInt("rid") + " content:" + result.getString("content"));
+                    } else {
+                        //System.out.println("rownum:" + result.getInt("rid") + " content:" + "");
+                        logger.info("rownum:" + result.getInt("rid") + " content:" + "");
                     }
-                    System.out.println("rownum:" + result.getInt("rid") + " content:" + result.getString("content"));
+
                 }
             } else {
                 //如果lastpostion不为0，则为循环检查，每次打印上次打印的末尾行之后的
@@ -71,23 +83,40 @@ public class MyTask extends TimerTask {
                 if (MyTask.lastPostion < result.getInt("headerposition") - 1) {
                     //如果有间隔就打印一串标识符
                     System.out.println("...............");
+                    logger.info("...............");
                     //判断邮件发送
-                    if (result.getString("content").substring(0, 4).equals("ORA-")) {
-                        this.oramail = new Mail("ERROR! the oracle has ORA", result.getString("content"));
-                        this.oramail.SendMail();
+                    this.content = result.getString("content");
+                    if (this.content != null) {
+                        //遇到有ORA-错误的行则发送邮件
+                        if (this.content.substring(0, 4).equals("ORA-")) {
+                            this.oramail = new Mail("ERROR! the oracle has ORA", result.getString("content"));
+                            this.oramail.SendMail();
+                        }
+                        //有间隔了这一行需要打印出来，否则可以为了获取lastpostion而牺牲掉这一行，进入下面的while判断是否打印
+                        //System.out.println("rownum:" + result.getInt("rid") + " content:" + result.getString("content"));
+                        logger.info("rownum:" + result.getInt("rid") + " content:" + result.getString("content"));
+                    } else {
+                       // System.out.println("rownum:" + result.getInt("rid") + " content:" + "");
+                        logger.info("rownum:" + result.getInt("rid") + " content:" + "");
                     }
-                    //有间隔了这一行需要打印出来，否则可以为了获取lastpostion而牺牲掉这一行，进入下面的while判断是否打印
-                    System.out.println("rownum:" + result.getInt("rid") + " content:" + result.getString("content"));
                 }
                 while (result.next()) {
                     //如果本行位置大于上一次的lastpostion，则打印
                     if (result.getInt("rid") > MyTask.lastPostion) {
                         //判断发送邮件
-                        if (result.getString("content").substring(0, 4).equals("ORA-")) {
-                            this.oramail = new Mail("ERROR! the oracle has ORA", result.getString("content"));
-                            this.oramail.SendMail();
+                        this.content = result.getString("content");
+                        if (this.content != null) {
+                            //遇到有ORA-错误的行则发送邮件
+                            if (this.content.substring(0, 4).equals("ORA-")) {
+                                this.oramail = new Mail("ERROR! the oracle has ORA", result.getString("content"));
+                                this.oramail.SendMail();
+                            }
+                            //System.out.println("rownum:" + result.getInt("rid") + " content:" + result.getString("content"));
+                            logger.info("rownum:" + result.getInt("rid") + " content:" + result.getString("content"));
+                        } else {
+                            //System.out.println("rownum:" + result.getInt("rid") + " content:" + "");
+                            logger.info("rownum:" + result.getInt("rid") + " content:" + "");
                         }
-                        System.out.println("rownum:" + result.getInt("rid") + " content:" + result.getString("content"));
                         //每次循环都设定私有postion
                         this.position = result.getInt("lastpostion");
                     }
@@ -98,6 +127,7 @@ public class MyTask extends TimerTask {
 
         } catch (ClassNotFoundException | SQLException e) {
             e.printStackTrace();
+            logger.error(e.getMessage(), e);
         } finally {
             try {
                 // 逐一将上面的几个对象关闭，因为不关闭的话会影响性能、并且占用资源
@@ -113,6 +143,7 @@ public class MyTask extends TimerTask {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
+                logger.error(e.getMessage(), e);
             }
         }
     }

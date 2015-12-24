@@ -22,7 +22,7 @@ public class GetConfig {
     protected static BufferedInputStream inputStream;
 
     static {
-        String proFilePath = System.getProperty("user.dir") + "\\config\\monitor.properties";
+        String proFilePath = System.getProperty("user.dir") + "/config/monitor.properties";
         try {
             inputStream = new BufferedInputStream(new FileInputStream(proFilePath));
             rb = new PropertyResourceBundle(inputStream);
