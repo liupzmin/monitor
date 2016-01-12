@@ -14,19 +14,22 @@ import java.util.TimerTask;
 import java.sql.*;
 import java.io.*;
 import org.apache.log4j.*;
+import java.util.ResourceBundle;
 
 public class MyTask extends TimerTask {
 
     private final int id;
+    private String path;
     private int position;
     private static int lastPostion;
     private Mail oramail;
     private String content;
     private static Logger logger = Logger.getLogger(MyTask.class); 
 
-    public MyTask(int id) {
+    public MyTask(int id,String path) {
         this.id = id;
-        PropertyConfigurator.configure(System.getProperty("user.dir") + "/config/log4j.properties");
+        this.path=path;
+        PropertyConfigurator.configure(this.path + "log4j.properties");
     }
 
     //  @Override
@@ -39,19 +42,20 @@ public class MyTask extends TimerTask {
         Connection con = null;// 创建一个数据库连接
         PreparedStatement pre = null;// 创建预编译语句对象，一般都是用这个而不用Statement
         ResultSet result = null;// 创建一个结果集对象
+        ResourceBundle rb=GetConfig.getfile(this.path);
         try {
             Class.forName("oracle.jdbc.driver.OracleDriver");// 加载Oracle驱动程序
-            String url = "jdbc:oracle:" + "thin:@" + GetConfig.rb.getString("server") + ":" + GetConfig.rb.getString("port") + ":" + GetConfig.rb.getString("servicename");
-            String user = GetConfig.rb.getString("username");// 用户名,系统默认的账户名
-            String password = GetConfig.rb.getString("password");// 你安装时选设置的密码
+            String url = "jdbc:oracle:" + "thin:@" + rb.getString("server") + ":" + rb.getString("port") + ":" + rb.getString("servicename");
+            String user = rb.getString("username");// 用户名,系统默认的账户名
+            String password = rb.getString("password");// 你安装时选设置的密码
             con = DriverManager.getConnection(url, user, password);// 获取连接
             String sql = "select o.rid,o.content,max(rid) over() lastpostion,min(rid) over() headerposition"
                     + " from (select rownum rid, a.* from alert a) o,"
-                    + " (select count(*) cn from " + GetConfig.rb.getString("tablename")
+                    + " (select count(*) cn from " + rb.getString("tablename")
                     + ") ca"
                     + " where o.rid > ca.cn - ?";// 预编译语句，“？”代表参数
             pre = con.prepareStatement(sql);// 实例化预编译语句
-            pre.setInt(1, Integer.parseInt(GetConfig.rb.getString("lines")));// 设置参数，前面的1表示参数的索引，而不是表中列名的索引
+            pre.setInt(1, Integer.parseInt(rb.getString("lines")));// 设置参数，前面的1表示参数的索引，而不是表中列名的索引
             result = pre.executeQuery();// 执行查询，注意括号中不需要再加参数
             //如果是第一次运行最后位置应该是0，那么设置末尾行数，直接打印尾部lines行
             if (MyTask.lastPostion == 0) {
@@ -64,7 +68,7 @@ public class MyTask extends TimerTask {
                     if (this.content != null) {
                         //遇到有ORA-错误的行则发送邮件
                         if (this.content.substring(0, 4).equals("ORA-")) {
-                            this.oramail = new Mail("ERROR! the "+ GetConfig.rb.getString("server")+" oracle has ORA", result.getString("content"));
+                            this.oramail = new Mail("ERROR! the "+ rb.getString("server")+" oracle has ORA", result.getString("content"));
                             this.oramail.SendMail();
                         }
                         //System.out.println("rownum:" + result.getInt("rid") + " content:" + result.getString("content"));
@@ -89,7 +93,7 @@ public class MyTask extends TimerTask {
                     if (this.content != null) {
                         //遇到有ORA-错误的行则发送邮件
                         if (this.content.substring(0, 4).equals("ORA-")) {
-                            this.oramail = new Mail("ERROR! the "+ GetConfig.rb.getString("server")+" oracle has ORA", result.getString("content"));
+                            this.oramail = new Mail("ERROR! the "+ rb.getString("server")+" oracle has ORA", result.getString("content"));
                             this.oramail.SendMail();
                         }
                         //有间隔了这一行需要打印出来，否则可以为了获取lastpostion而牺牲掉这一行，进入下面的while判断是否打印
@@ -108,7 +112,7 @@ public class MyTask extends TimerTask {
                         if (this.content != null) {
                             //遇到有ORA-错误的行则发送邮件
                             if (this.content.substring(0, 4).equals("ORA-")) {
-                                this.oramail = new Mail("ERROR! the "+ GetConfig.rb.getString("server")+" oracle has ORA", result.getString("content"));
+                                this.oramail = new Mail("ERROR! the "+ rb.getString("server")+" oracle has ORA", result.getString("content"));
                                 this.oramail.SendMail();
                             }
                             //System.out.println("rownum:" + result.getInt("rid") + " content:" + result.getString("content"));

@@ -20,7 +20,7 @@ public class GetConfig {
 
     protected static ResourceBundle rb;
     protected static BufferedInputStream inputStream;
-
+/*
     static {
         String proFilePath = System.getProperty("user.dir") + "/config/monitor.properties";
         try {
@@ -32,5 +32,19 @@ public class GetConfig {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+*/
+    public static ResourceBundle getfile(String path) {
+
+        String proFilePath = path + "monitor.properties";
+        try {
+            inputStream = new BufferedInputStream(new FileInputStream(proFilePath));
+            rb = new PropertyResourceBundle(inputStream);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return rb;
     }
 }
