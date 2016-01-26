@@ -25,7 +25,7 @@ public class Monitor {
         ResourceBundle rb=GetConfig.getfile(args[0]);
        // System.out.println(args[0]);
         Timer timer = new Timer();
-        MyTask secondTask = new MyTask(2,args[0]);
+        MyTask secondTask = new MyTask(2,args[0],rb);
         logger.info("************Start to run monitor job!*********************");
         timer.schedule(secondTask, 1000, Long.parseLong(rb.getString("interval")));
         // 1秒后启动任务,以后每隔10秒执行一次线程

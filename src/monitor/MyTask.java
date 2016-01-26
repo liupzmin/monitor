@@ -25,10 +25,12 @@ public class MyTask extends TimerTask {
     private Mail oramail;
     private String content;
     private static Logger logger = Logger.getLogger(MyTask.class); 
+    private ResourceBundle rb;
 
-    public MyTask(int id,String path) {
+    public MyTask(int id,String path,ResourceBundle handle) {
         this.id = id;
         this.path=path;
+        this.rb=handle;
         PropertyConfigurator.configure(this.path + "log4j.properties");
     }
 
@@ -42,7 +44,7 @@ public class MyTask extends TimerTask {
         Connection con = null;// 创建一个数据库连接
         PreparedStatement pre = null;// 创建预编译语句对象，一般都是用这个而不用Statement
         ResultSet result = null;// 创建一个结果集对象
-        ResourceBundle rb=GetConfig.getfile(this.path);
+        //ResourceBundle rb=GetConfig.getfile(this.path);
         try {
             Class.forName("oracle.jdbc.driver.OracleDriver");// 加载Oracle驱动程序
             String url = "jdbc:oracle:" + "thin:@" + rb.getString("server") + ":" + rb.getString("port") + ":" + rb.getString("servicename");
