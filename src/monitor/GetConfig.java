@@ -19,8 +19,8 @@ import java.util.ResourceBundle;
 public class GetConfig {
 
     protected static ResourceBundle rb;
-    protected static BufferedInputStream inputStream;
-/*
+
+    /*
     static {
         String proFilePath = System.getProperty("user.dir") + "/config/monitor.properties";
         try {
@@ -33,10 +33,11 @@ public class GetConfig {
             e.printStackTrace();
         }
     }
-*/
+     */
     public static ResourceBundle getfile(String path) {
 
         String proFilePath = path + "monitor.properties";
+        BufferedInputStream inputStream = null;
         try {
             inputStream = new BufferedInputStream(new FileInputStream(proFilePath));
             rb = new PropertyResourceBundle(inputStream);
@@ -44,6 +45,14 @@ public class GetConfig {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            try {
+                if (inputStream != null) {
+                    inputStream.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
         return rb;
     }
