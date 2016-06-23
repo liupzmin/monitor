@@ -11,10 +11,13 @@ package monitor;
  */
 import java.util.*;
 import java.util.TimerTask;
+import java.text.SimpleDateFormat;
 import java.sql.*;
 import java.io.*;
 import org.apache.log4j.*;
 import java.util.ResourceBundle;
+import oracle.ucp.jdbc.PoolDataSourceFactory;
+import oracle.ucp.jdbc.PoolDataSource;
 
 public class MyTask extends TimerTask {
 
@@ -26,39 +29,49 @@ public class MyTask extends TimerTask {
     private String content;
     private static Logger logger = Logger.getLogger(MyTask.class); 
     private ResourceBundle rb;
-
-    public MyTask(int id,String path,ResourceBundle handle) {
+    private PoolDataSource  pds;
+    public MyTask(int id,String path,ResourceBundle handle,PoolDataSource pool) throws SQLException{
         this.id = id;
         this.path=path;
         this.rb=handle;
+        this.pds=pool;
         PropertyConfigurator.configure(this.path + "log4j.properties");
+        
     }
 
     //  @Override
     @SuppressWarnings("override")
     public void run() {
-        testOracle();
+        //SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//设置日期格式
+        //System.out.println(df.format(new java.util.Date()));// new Date()为获取当前系统时间
+        try {
+            checkAlert();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            logger.error(ex.getMessage(), ex);
+        }
     }
 
-    public void testOracle() {
-        Connection con = null;// 创建一个数据库连接
-        PreparedStatement pre = null;// 创建预编译语句对象，一般都是用这个而不用Statement
+    public void checkAlert() throws SQLException {
+        Connection conn = pds.getConnection();// 创建一个数据库连接
+        PreparedStatement stmt = null;
         ResultSet result = null;// 创建一个结果集对象
-        //ResourceBundle rb=GetConfig.getfile(this.path);
+        /*
+        int avlConnCount = pds.getAvailableConnectionsCount();
+        System.out.println("\nAvailable connections: " + avlConnCount);
+        int brwConnCount = pds.getBorrowedConnectionsCount();
+        System.out.println("\nBorrowed connections: " + brwConnCount);
+        */
         try {
-            Class.forName("oracle.jdbc.driver.OracleDriver");// 加载Oracle驱动程序
-            String url = "jdbc:oracle:" + "thin:@" + rb.getString("server") + ":" + rb.getString("port") + ":" + rb.getString("servicename");
-            String user = rb.getString("username");// 用户名,系统默认的账户名
-            String password = rb.getString("password");// 你安装时选设置的密码
-            con = DriverManager.getConnection(url, user, password);// 获取连接
+           
             String sql = "select o.rid,o.content,max(rid) over() lastpostion,min(rid) over() headerposition"
                     + " from (select rownum rid, a.* from alert a) o,"
                     + " (select count(*) cn from " + rb.getString("tablename")
                     + ") ca"
                     + " where o.rid > ca.cn - ?";// 预编译语句，“？”代表参数
-            pre = con.prepareStatement(sql);// 实例化预编译语句
-            pre.setInt(1, Integer.parseInt(rb.getString("lines")));// 设置参数，前面的1表示参数的索引，而不是表中列名的索引
-            result = pre.executeQuery();// 执行查询，注意括号中不需要再加参数
+            stmt = conn.prepareStatement(sql);// 实例化预编译语句
+            stmt.setInt(1, Integer.parseInt(rb.getString("lines")));// 设置参数，前面的1表示参数的索引，而不是表中列名的索引
+            result = stmt.executeQuery();// 执行查询，注意括号中不需要再加参数
             //如果是第一次运行最后位置应该是0，那么设置末尾行数，直接打印尾部lines行
             if (MyTask.lastPostion == 0) {
                 while (result.next()) // 当结果集不为空时
@@ -131,7 +144,7 @@ public class MyTask extends TimerTask {
                 MyTask.lastPostion = this.position;
             }
 
-        } catch (ClassNotFoundException | SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
             logger.error(e.getMessage(), e);
         } finally {
@@ -141,12 +154,19 @@ public class MyTask extends TimerTask {
                 if (result != null) {
                     result.close();
                 }
-                if (pre != null) {
-                    pre.close();
+                if (stmt != null) {
+                    stmt.close();
                 }
-                if (con != null) {
-                    con.close();
+                if (conn != null) {
+                    conn.close();
+                    conn = null;
                 }
+                /*
+                avlConnCount = pds.getAvailableConnectionsCount();
+                System.out.println("\nAvailable connections: " + avlConnCount);
+                brwConnCount = pds.getBorrowedConnectionsCount();
+                System.out.println("\nBorrowed connections: " + brwConnCount);
+                */
             } catch (Exception e) {
                 e.printStackTrace();
                 logger.error(e.getMessage(), e);
