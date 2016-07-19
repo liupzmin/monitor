@@ -33,7 +33,7 @@ public class GetUcp {
             pds.setURL(poolurl);
             pds.setUser(pooluser);
             pds.setPassword(pollpassword);
-            pds.setInitialPoolSize(3);
+            pds.setInitialPoolSize(2);
 
         } catch (SQLException e) {
             logger.error(e.getMessage(), e);
