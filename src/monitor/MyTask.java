@@ -27,16 +27,17 @@ public class MyTask extends TimerTask {
     private static int lastPostion;
     private Mail oramail;
     private String content;
-    private static Logger logger = Logger.getLogger(MyTask.class); 
+    private static Logger logger = Logger.getLogger(MyTask.class);
     private ResourceBundle rb;
-    private PoolDataSource  pds;
-    public MyTask(int id,String path,ResourceBundle handle,PoolDataSource pool) throws SQLException{
+    private PoolDataSource pds;
+
+    public MyTask(int id, String path, ResourceBundle handle, PoolDataSource pool) throws SQLException {
         this.id = id;
-        this.path=path;
-        this.rb=handle;
-        this.pds=pool;
+        this.path = path;
+        this.rb = handle;
+        this.pds = pool;
         PropertyConfigurator.configure(this.path + "log4j.properties");
-        
+
     }
 
     //  @Override
@@ -61,14 +62,15 @@ public class MyTask extends TimerTask {
         System.out.println("\nAvailable connections: " + avlConnCount);
         int brwConnCount = pds.getBorrowedConnectionsCount();
         System.out.println("\nBorrowed connections: " + brwConnCount);
-        */
+         */
         try {
-           
+
             String sql = "select o.rid,o.content,max(rid) over() lastpostion,min(rid) over() headerposition"
-                    + " from (select rownum rid, a.* from alert a) o,"
+                    + " from (select rownum rid, a.* from " + rb.getString("tablename") + " a) o,"
                     + " (select count(*) cn from " + rb.getString("tablename")
                     + ") ca"
                     + " where o.rid > ca.cn - ?";// 预编译语句，“？”代表参数
+            //System.out.println(sql);
             stmt = conn.prepareStatement(sql);// 实例化预编译语句
             stmt.setInt(1, Integer.parseInt(rb.getString("lines")));// 设置参数，前面的1表示参数的索引，而不是表中列名的索引
             result = stmt.executeQuery();// 执行查询，注意括号中不需要再加参数
@@ -83,7 +85,7 @@ public class MyTask extends TimerTask {
                     if (this.content != null) {
                         //遇到有ORA-错误的行则发送邮件
                         if (this.content.substring(0, 4).equals("ORA-")) {
-                            this.oramail = new Mail("ERROR! the "+ rb.getString("server")+" oracle has ORA", result.getString("content"));
+                            this.oramail = new Mail("ERROR! the " + rb.getString("server") + " oracle has ORA", result.getString("content"));
                             this.oramail.SendMail();
                         }
                         //System.out.println("rownum:" + result.getInt("rid") + " content:" + result.getString("content"));
@@ -108,14 +110,14 @@ public class MyTask extends TimerTask {
                     if (this.content != null) {
                         //遇到有ORA-错误的行则发送邮件
                         if (this.content.substring(0, 4).equals("ORA-")) {
-                            this.oramail = new Mail("ERROR! the "+ rb.getString("server")+" oracle has ORA", result.getString("content"));
+                            this.oramail = new Mail("ERROR! the " + rb.getString("server") + " oracle has ORA", result.getString("content"));
                             this.oramail.SendMail();
                         }
                         //有间隔了这一行需要打印出来，否则可以为了获取lastpostion而牺牲掉这一行，进入下面的while判断是否打印
                         //System.out.println("rownum:" + result.getInt("rid") + " content:" + result.getString("content"));
                         logger.info("rownum:" + result.getInt("rid") + " content:" + result.getString("content"));
                     } else {
-                       // System.out.println("rownum:" + result.getInt("rid") + " content:" + "");
+                        // System.out.println("rownum:" + result.getInt("rid") + " content:" + "");
                         logger.info("rownum:" + result.getInt("rid") + " content:" + "");
                     }
                 }
@@ -127,7 +129,7 @@ public class MyTask extends TimerTask {
                         if (this.content != null) {
                             //遇到有ORA-错误的行则发送邮件
                             if (this.content.substring(0, 4).equals("ORA-")) {
-                                this.oramail = new Mail("ERROR! the "+ rb.getString("server")+" oracle has ORA", result.getString("content"));
+                                this.oramail = new Mail("ERROR! the " + rb.getString("server") + " oracle has ORA", result.getString("content"));
                                 this.oramail.SendMail();
                             }
                             //System.out.println("rownum:" + result.getInt("rid") + " content:" + result.getString("content"));
@@ -166,7 +168,7 @@ public class MyTask extends TimerTask {
                 System.out.println("\nAvailable connections: " + avlConnCount);
                 brwConnCount = pds.getBorrowedConnectionsCount();
                 System.out.println("\nBorrowed connections: " + brwConnCount);
-                */
+                 */
             } catch (Exception e) {
                 e.printStackTrace();
                 logger.error(e.getMessage(), e);
